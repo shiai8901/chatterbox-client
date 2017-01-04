@@ -1,41 +1,21 @@
 // YOUR CODE HERE:
-var app = {
-  // init: function() {
+var app = { };
 
-  // } 
-};
+app.rooms = [];
 
+app.friends = [];
 // 
 app.allMessages = [];
 
 app.init = function() {
-  // preventDefault()
-    // setInterval(function() {
-    //   app.fetch('https://api.parse.com/1/classes/messages', {
+  app.renderRoom();
 
-    //   }, function(result) {
-    //     console.log('result', result);
-    //     for (var i = result.results.length - 1; i >= 0; i--) {
-    //       app.renderMessage(result.results[i]);
-    //     }
-    //   } );
-    // }, 2000);
-
-  // $('#send .submit').submit(app.handleSubmit());
-  // 
-  app.fetch('https://api.parse.com/1/classes/messages', {
-
-  }, function(result) {
-    console.log('result', result);
-    for (var i = result.results.length - 1; i >= 0; i--) {
-      app.renderMessage(result.results[i]);
-    }
-  } );
-
+  $(document).on('click', '.username', app.handleUsernameClick);
+ 
 };
 
 app.send = function(message, success, dataType) {
-  // $('#send .submit').click(app.handleSubmit());
+
   $.ajax({
       // This is the url you should use to communicate with the parse API server.
     url: 'https://api.parse.com/1/classes/messages',
@@ -50,21 +30,12 @@ app.send = function(message, success, dataType) {
       console.error('chatterbox: Failed to send message', data);
     }
   });
-  // app.fetch('https://api.parse.com/1/classes/messages', {
-
-  // }, function(result) {
-  //   // console.log('result', result);
-  //   for (var i = 0; i < result.results.length; i++) {
-  //     app.renderMessage(result.results[i]);
-  //   }
-  // } );
 };
 
 app.fetch = (url, data, success, dataType) => {
   $.ajax({
     url: url,
     data: {
-      // limit: 100000,
       order: '-createdAt'
     },
     success: success,
@@ -73,87 +44,118 @@ app.fetch = (url, data, success, dataType) => {
 
 };
 
-// app.fetch = () => {
-//   $.get('https://myAppID:6UJYuifdHSHnOvG2DiYXU6cwluUvgDiVOpr8Weqi-keygYu7Z35zwiNz4BaNgwyaq9u9A36eVHd38MiDvCH5@api.parse.com/1/classes/messages', function(data, status) {
-//     return data;
-//   });
-
-// };
 
 app.clearMessages = () => {
   $('#chats').empty();
-  console.log("cleared");
+  console.log('cleared');
 };
 
 // render a single piece of message as a div inside chats
 app.renderMessage = function(message) {  
-  $('#chats').append('<div class="chat"> <h3 class="username" onclick="app.handleUsernameClick()">' + message.username + '</h3>' + '<p class="text">' 
+  $('#chats').append('<div class="chat"><h3 class="username" id="' + message.username + '">' + message.username + '</h3>' + '<p class="text">' 
     + message.text + '</p>' + '<a class="roomname" onclick="functionCall()">' 
     + message.roomname + '</a>' + '</div>');   
-
+  if (app.rooms.indexOf(message.roomname) === -1) {
+    app.rooms.push(message.roomname);
+    $('#rooms').append('<option class="roomname" value="' + message.roomname + ' ">' + message.roomname + '</option>');
+    console.log('new room added');
+  }
 };
 
-// filter the messages with roomname
+app.currentRoom;
 app.renderRoom = function(roomname) {
-  $('select').append('<option class="roomname">' + roomname + '</option>');
 
-  // fetch messages with 'roomname'
+  var a = roomname;
+  if (a === undefined) {
+    var undefinedInterval = setInterval(function() {
 
-  // render messages in chats div
+      if (app.currentRoom !== a) {
+        clearInterval(undefinedInterval);
+      }
+      app.fetch('https://api.parse.com/1/classes/messages', {
 
+      }, function(result) {
+        app.clearMessages();
+        console.log('result', result);
+        for (var i = 0; i < result.results.length; i++) {
+          app.renderMessage(result.results[i]);
+        }
+      } );
+
+    }, 1000);    
+  } else {
+
+    a = a.trimRight();
+    var definedInterval = setInterval(function() {
+
+      if (app.currentRoom !== a) {
+        clearInterval(definedInterval);
+      }
+      app.fetch('https://api.parse.com/1/classes/messages', {
+      }, function(result) {
+        app.clearMessages();
+        for (var i = 0; i < result.results.length; i++) {
+          if (result.results[i].roomname === a) {
+            app.renderMessage(result.results[i]);
+          }
+        }
+      });
+
+    }, 1000);    
+  }
+  app.currentRoom = a;
 };
+// app.renderRoom = function(roomname) {
+//   var $option = $('<option/>').val(roomname).text(roomname);
 
-app.handleUsernameClick = function() {
+//   app.$roomSelect.append($option);
+// };
+// app.renderRoomList = function(messages) {
+//   app.$roomSelect.html('<option value="__newRoom">New room...</option></select>');
 
-};
+//   if (messages) {
+//     messages.forEach(function(message) {
+//       var roomname = message.roomname;
+//       if (roomname) {
+//         app.renderRoom(roomname);
+//       }
+//     });
+//   }
 
-
-app.handleSubmit = function() {
-  // console.log('working');
-  // var a = 
-  // console.log(a);
-  // var obj = 
-  // console.log(obj);
-  var messagetxt = $('.submit:input').val();
-  app.send({
-    username: this.username,
-    text: messagetxt,
-    roomname: 'lobby'
-  });
-  // send message to server
-  app.clearMessages();
-  app.fetch('https://api.parse.com/1/classes/messages', {}, function(result) {
-      // console.log('result', result);
-    for (var i = 0; i < result.results.length; i++) {
-      app.renderMessage(result.results[i]);
-    }
-  });
-  // refresh the chats div 
-
-};
-
-// // Get more messages by clicking the button refresh
-// $('#refresh').click(function() {
-
-//   // fetch all messages
-
-//   // render messages
-
-// });
-
-// var message = {
-//   'username': 'greg',
-//   'message': 'hello',
-//   'roomname': 'lobby'
 // };
 
 
-// Click the roomname, shows all messages in that room
-// var room = $('#chats a').value();
-// app.renderRoom(room);
+app.handleUsernameClick = function(event) {
+  var name = event.currentTarget.innerText;
+  if (app.friends.indexOf(name) === -1) {
+    app.friends.push(name);
+    var id = '#' + name;
+    $(id).addClass('.friend');
+  } else {
+    $(id).removeClass('.friend');
+  }
+};
 
+app.chooseRoom = function() {
+  app.currentRoom = $(this).message.roomname;
+  console.log('room selected');
+};
 
-
+// '<script>document.body.style.backgroundImage = "url( 'http://images.8tracks.com/cover/i/009/493/548/Haha_i_say_that_all_the_time__406a982d46ccc523799e6aef45080387_1_-5889.png?rect=100,0,711,711&q=98&fm=jpg&fit=max&w=640&h=640' )"</script>;'
+app.handleSubmit = function() {
+  var message = {};
+  message.text = $('#message').val();
+  message.username = 'Carlos Danger';
+  if ($('#addRoom').val()) {
+    message.roomname = $('#addRoom').val();
+  } else if (app.currentRoom) {
+    message.roomname = app.currentRoom;
+  } else {
+    message.roomname = 'lobby';
+  }
+  app.send(message);
+  app.renderRoom(message.roomname);
+};
 
 app.init();
 
